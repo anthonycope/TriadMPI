@@ -38,6 +38,7 @@ return tokens;
 
 }
 
+// parses the data from one line of input
 vector <int>  getInput(string line)
 {
     stringstream ss(line); 
@@ -52,7 +53,6 @@ vector <int>  getInput(string line)
 
     for (int i = 0; i < stringNodes.size(); i++)
     {
-        //cout << stringNodes[i] << " ";
         intNodes.push_back(atoi(stringNodes[i].c_str()));
     }
 
@@ -63,6 +63,7 @@ int main ()
 {
     fstream inputFile;
     string line;
+    //key is the node, value is the vector of neighbors
     map<int, vector <int> > list;
 
     inputFile.open("testinput.egonets");
@@ -89,26 +90,22 @@ int main ()
     map<int, vector <int> >::iterator it;
     for (it=list.begin(); it!=list.end(); ++it)
     {
-        cout << "Node: " << it-> first << endl;
+        int key = it -> first;
+        cout << "Node: " << key << endl;
         cout << "Neighbors: ";
         vector<int> nodes = it -> second;
 
          for (int i = 0; i < nodes.size(); i++)
             {
                 cout << nodes[i] << " ";
+                if(key < nodes[i])
+                {
+                    //add the neighbors of key and neighbors of node[i] into new vector
+                    //do the other stuff in the pseudocode below
+                }
             }
         cout << endl;
     }
-        
-    /*
-    for (int i = 1; i < intNodes.size(); i++)
-    {
-        cout << intNodes[i] << " ";
-        if(intnodes[0] < intNodes[i])
-        {
-
-        }
-    }*/
 
 }
 
@@ -119,7 +116,7 @@ int main ()
 // counts[4];
 //take first element of row (u)
     //for each "neighbor" v of that row
-        // if uv is less than v
+        // if u is less than v
                 //S = all neighbors of first element, all neighbors of the selected neighbor (have to find them)
                 //add counts[1] += counts[1] + n - |S| -2
                 //for each element w in S
