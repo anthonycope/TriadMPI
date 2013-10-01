@@ -18,6 +18,10 @@
 
 using namespace std;
 
+//key is the node, value is the vector of neighbors
+map<int, vector <int> > list;
+
+
 //function from: http://www.openframeworks.cc/files/005-rc/005-rc2-xcode-for-zach/addons/ofXmlSettings/src/ofXmlSettings.cpp
 vector<string> tokenize(const string & str, const string & delim)
 {
@@ -59,12 +63,44 @@ vector <int>  getInput(string line)
     return intNodes;
 }
 
+int link(int v1, int v2) {
+	vector<int> v1_list = list[v1];
+	vector<int> v2_list = list[v2];
+
+	// O(n) :-( can we do better? XXX
+	for (int i=0; i < v1_list.size(); i++) {
+		if (v1_list[i] == v2) return 1;
+	}
+
+	return 0;
+}
+
+int tricode(int u, int v, int w) {
+	int i = 0;
+
+	// Since we arent directed, we count edges as both ways?
+	
+	i += (link(u, v)) ? 3 : 0; 
+	i += (link(w, v)) ? 12 : 0;
+	i += (link(u, w)) ? 48 : 0;
+
+	if (i == 3 || i == 12 || i == 48) return 0; 
+	if (i == 15 || i == 51 || i == 60) return 1;
+	if (i == 63) return 3;
+
+	// 0-63
+	return i;
+}
+
+
 int main ()
 {
     fstream inputFile;
     string line;
-    //key is the node, value is the vector of neighbors
-    map<int, vector <int> > list;
+
+    map<int, vector <int> > links;
+    int triadCounts[4] = {0, 0, 0, 0}, total = 0;
+    int ret=0;
 
     inputFile.open("testinput.egonets");
     if(inputFile.is_open())
@@ -88,28 +124,49 @@ int main ()
     }
 
     map<int, vector <int> >::iterator it;
+
     for (it=list.begin(); it!=list.end(); ++it)
     {
-        int key = it -> first;
+	// row u
+        int key = it -> first; 
         cout << "Node: " << key << endl;
         cout << "Neighbors: ";
         vector<int> nodes = it -> second;
 
-         for (int i = 0; i < nodes.size(); i++)
+	// for each neighbor v
+        for (int i = 0; i < nodes.size(); i++)
             {
                 cout << nodes[i] << " ";
                 if(key < nodes[i])
                 {
-                    //add the neighbors of key and neighbors of node[i] into new vector
+			// XXX how to determine tricode type for count?
+			
+	                //add the neighbors of key and neighbors of node[i] into new vector
+			vector<int> S = list[nodes[i]];
+			for (int j=0; j < S.size(); j++) {
+				if (key < S[j]) {
+					ret = tricode(key, nodes[i], S[j]);
+					triadCounts[ret]++;
+				}
+			}
+	
                     //do the other stuff in the pseudocode below
+
                 }
-            }
-        cout << endl;
+        }
+
     }
 
+    cout << endl << "Triad Counts: " << endl;
+    for (int i = 0; i < 4; i++) {
+ 		total += triadCounts[i];
+		cout << i << ": " << triadCounts[i] << endl;
+    }
+    cout << "Total: " << total << endl;
+
+    cout << endl;
+
 }
-
-
 
 // int n = num nodes;
 //intialize an empty array to hold count for each type of triadmpi
@@ -133,3 +190,4 @@ int main ()
 
 //Tricode(v, u, w)
 // Figure out if they are a 2 or 3 connection triad
+
