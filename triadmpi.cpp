@@ -87,7 +87,7 @@ int tricode(int u, int v, int w) {
 	i += (link(u, w)) ? 48 : 0;
 
 	if (i == 3 || i == 12 || i == 48) return 0; 
-	if (i == 15 || i == 51 || i == 60) return 2;
+	if (i == 15 || i == 51 || i == 60) return 2; // changed this to two, was 3 before
 	if (i == 63) return 3;
 
 	// 0-63
@@ -148,9 +148,12 @@ int main ()
                     sort(nodes2.begin(), nodes2.end());
                     vector<int> :: iterator it2;
 
+
+                    // S is the union of the node and its neighbors
                     S.insert(S.end(), nodes2.begin(), nodes2.end() );
                     sort(S.begin(), S.end());
                     unique(S.begin(), S.end());
+
                     //vector<int> :: iterator it3 = S.begin();
                     //it2 = set_union(nodes.begin(), nodes.end(), nodes2.begin(), nodes2.end(), S.begin() );
                     //S.resize( it2-S.begin() );
@@ -161,10 +164,9 @@ int main ()
                     {
                             //cout << ' ' << *it2;
                     }
-                    cout << endl;
-                    
-                    // add list of nodes from v, get rid of duplicates
+                    cout << endl;  
 
+                    // the algorithm says its the number of edges in S, but not sure how to easily compute that
                     triadCounts[1] += count- S.size() -2;
             		// XXX how to determine tricode type for count?
             			
@@ -186,19 +188,18 @@ int main ()
 
     }
 
-    cout << endl << "Triad Counts: " << endl;
     for (int i = 0; i < 4; i++) 
     {
  		total += triadCounts[i];		
     }
 
+    triadCounts[0] = (double) (1/6 * count * (count -1) * (count -2)) - total;
     cout << endl << "Triad Counts: " << endl;
     for (int i = 0; i < 4; i++) 
     {
         cout << i << ": " << triadCounts[i] << endl;
     }
 
-    triadCounts[0] = 1/6 * count * (count -1) * (count -2) - total;
     cout << "Total: " << total << endl;
 
     cout << endl;
