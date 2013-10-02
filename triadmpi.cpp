@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <map>
+#include <algorithm>
+#include <iterator>
 #include "mpi.h"
 
 using namespace std;
@@ -67,29 +69,70 @@ int link(int v1, int v2) {
 	vector<int> v1_list = list[v1];
 	vector<int> v2_list = list[v2];
 
-	// O(n) :-( can we do better? XXX
-	for (int i=0; i < v1_list.size(); i++) {
-		if (v1_list[i] == v2) return 1;
-	}
+	if (binary_search(v1_list.begin(), v1_list.end(), v2)) return 1;
 
 	return 0;
 }
 
 int tricode(int u, int v, int w) {
-	int i = 0;
+//	vector<int> ret(2);
+	int i=0;
 
-	// Since we arent directed, we count edges as both ways?
-	
 	i += (link(u, v)) ? 3 : 0; 
 	i += (link(w, v)) ? 12 : 0;
 	i += (link(u, w)) ? 48 : 0;
 
-	if (i == 3 || i == 12 || i == 48) return 0; 
-	if (i == 15 || i == 51 || i == 60) return 1;
+	if (i == 3 || i == 12 || i == 48) return 1; 
+	if (i == 15 || i == 51 || i == 60) return 2;
 	if (i == 63) return 3;
 
 	// 0-63
 	return i;
+
+/*	
+	if (link(u,v)) {
+		ret[1]++;
+		ret[0] += 1;
+	}
+
+	if (link(v,u)) {
+		ret[1]++;
+		ret[0] += 2;
+	}
+
+	if (link(w,v)) {
+		ret[1]++;
+		ret[0] += 6;
+	}
+
+	if (link(v,w)) {
+		ret[1]++;
+		ret[0] += 12;
+	}
+
+	if (link(u,w)) {
+		ret[1]++;
+		ret[0] += 32;
+	}
+
+	if (link(w,u)) {
+		ret[1]++;
+		ret[0] += 48;
+	}
+*/
+
+/*
+	ret[0] += (link(u, v)) ? 1 : 0;
+	ret[0] += (link(v, u)) ? 2 : 0;
+ 
+	ret[0] += (link(w, v)) ? 6 : 0;
+	ret[0] += (link(v, w)) ? 12 : 0;
+
+	ret[0] += (link(u, w)) ? 32 : 0;
+	ret[0] += (link(w, u)) ? 48 : 0;
+*/
+
+//	return ret;
 }
 
 
@@ -101,6 +144,8 @@ int main ()
     map<int, vector <int> > links;
     int triadCounts[4] = {0, 0, 0, 0}, total = 0;
     int ret=0;
+    int local1=0, local2=0;
+    int count=0;
 
     inputFile.open("testinput.egonets");
     if(inputFile.is_open())
@@ -115,8 +160,12 @@ int main ()
             int key = nodes[0];
             //remove the first node from list of neighbors
             nodes.erase(nodes.begin());
+
+	    sort(nodes.begin(), nodes.end());
+
             //assign neighbors to map with node as key
             list[key] = nodes;
+	    count += nodes.size() + 1;
         }
 
         inputFile.close();
@@ -129,37 +178,59 @@ int main ()
     {
 	// row u
         int key = it -> first; 
+/*
         cout << "Node: " << key << endl;
         cout << "Neighbors: ";
+*/
         vector<int> nodes = it -> second;
 
 	// for each neighbor v
         for (int i = 0; i < nodes.size(); i++)
-            {
-                cout << nodes[i] << " ";
-                if(key < nodes[i])
-                {
-			// XXX how to determine tricode type for count?
-			
-	                //add the neighbors of key and neighbors of node[i] into new vector
-			vector<int> S = list[nodes[i]];
-			for (int j=0; j < S.size(); j++) {
-				if (key < S[j]) {
-					ret = tricode(key, nodes[i], S[j]);
-					triadCounts[ret]++;
-				}
-			}
-	
-                    //do the other stuff in the pseudocode below
+       	    {
+//                cout << nodes[i] << " ";
 
-                }
+		if (key < nodes[i]) {
+			
+                    vector<int> S (nodes);
+                    vector<int> nodes2 = list[nodes[i]];
+                    vector<int> :: iterator it2;
+
+                    S.insert(S.end(), nodes2.begin(), nodes2.end() );
+                    sort(S.begin(), S.end());
+                    unique(S.begin(), S.end());
+		    //triadCounts[1] += (nodes.size()+nodes2.size()) - S.size();
+		    local1 = 0;
+	
+		    for (int j=0; j < S.size(); j++) {
+				if (key < S[j]) continue;
+
+				ret = tricode(key, nodes[i], S[j]);
+
+				triadCounts[ret]++;
+				local1++;
+	   	    }
+
+	            if (S.size() - local1 > 0) triadCounts[1] += S.size() - local1;
+		    else if (S.size() <= 0) triadCounts[1]++;
+
+		}
         }
+
 
     }
 
+    total = triadCounts[1] + triadCounts[2] + triadCounts[3];
+
+    // n! / r!(n-r)!
+    // or 1000! / 3! * 997! = 1000*999*998 / 6
+    // 166167000
+
+    triadCounts[0] = (list.size() * (list.size()-1) * (list.size()-2))/6 - total;
+
+    total += triadCounts[0];
+
     cout << endl << "Triad Counts: " << endl;
     for (int i = 0; i < 4; i++) {
- 		total += triadCounts[i];
 		cout << i << ": " << triadCounts[i] << endl;
     }
     cout << "Total: " << total << endl;
