@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <map>
+#include <algorithm>
+#include <iterator>
 #include "mpi.h"
 
 using namespace std;
@@ -85,7 +87,7 @@ int tricode(int u, int v, int w) {
 	i += (link(u, w)) ? 48 : 0;
 
 	if (i == 3 || i == 12 || i == 48) return 0; 
-	if (i == 15 || i == 51 || i == 60) return 1;
+	if (i == 15 || i == 51 || i == 60) return 2;
 	if (i == 63) return 3;
 
 	// 0-63
@@ -101,6 +103,7 @@ int main ()
     map<int, vector <int> > links;
     int triadCounts[4] = {0, 0, 0, 0}, total = 0;
     int ret=0;
+    int count = 0; // counts number of nodes
 
     inputFile.open("testinput.egonets");
     if(inputFile.is_open())
@@ -117,6 +120,7 @@ int main ()
             nodes.erase(nodes.begin());
             //assign neighbors to map with node as key
             list[key] = nodes;
+            count++;
         }
 
         inputFile.close();
@@ -127,29 +131,54 @@ int main ()
 
     for (it=list.begin(); it!=list.end(); ++it)
     {
-	// row u
+	   // row u
         int key = it -> first; 
         cout << "Node: " << key << endl;
         cout << "Neighbors: ";
         vector<int> nodes = it -> second;
-
-	// for each neighbor v
+        sort(nodes.begin(), nodes.end());
+	    // for each neighbor v
         for (int i = 0; i < nodes.size(); i++)
             {
                 cout << nodes[i] << " ";
                 if(key < nodes[i])
                 {
-			// XXX how to determine tricode type for count?
-			
-	                //add the neighbors of key and neighbors of node[i] into new vector
-			vector<int> S = list[nodes[i]];
-			for (int j=0; j < S.size(); j++) {
-				if (key < S[j]) {
-					ret = tricode(key, nodes[i], S[j]);
-					triadCounts[ret]++;
-				}
-			}
-	
+                    vector<int> S (nodes);
+                    vector<int> nodes2 = list[nodes[i]];
+                    sort(nodes2.begin(), nodes2.end());
+                    vector<int> :: iterator it2;
+
+                    S.insert(S.end(), nodes2.begin(), nodes2.end() );
+                    sort(S.begin(), S.end());
+                    unique(S.begin(), S.end());
+                    //vector<int> :: iterator it3 = S.begin();
+                    //it2 = set_union(nodes.begin(), nodes.end(), nodes2.begin(), nodes2.end(), S.begin() );
+                    //S.resize( it2-S.begin() );
+
+                   
+
+                    for(it2 = S.begin(); it2!= S.end(); it2++)
+                    {
+                            //cout << ' ' << *it2;
+                    }
+                    cout << endl;
+                    
+                    // add list of nodes from v, get rid of duplicates
+
+                    triadCounts[1] += count- S.size() -2;
+            		// XXX how to determine tricode type for count?
+            			
+        	        //add the neighbors of key and neighbors of node[i] into new vector
+        			
+        			for (int j=0; j < S.size(); j++) 
+                    {
+        				if (key < S[j]) 
+                        {
+        					ret = tricode(key, nodes[i], S[j]);
+        					triadCounts[ret]++;
+        				}
+        			}
+            	
                     //do the other stuff in the pseudocode below
 
                 }
@@ -158,13 +187,22 @@ int main ()
     }
 
     cout << endl << "Triad Counts: " << endl;
-    for (int i = 0; i < 4; i++) {
- 		total += triadCounts[i];
-		cout << i << ": " << triadCounts[i] << endl;
+    for (int i = 0; i < 4; i++) 
+    {
+ 		total += triadCounts[i];		
     }
+
+    cout << endl << "Triad Counts: " << endl;
+    for (int i = 0; i < 4; i++) 
+    {
+        cout << i << ": " << triadCounts[i] << endl;
+    }
+
+    triadCounts[0] = 1/6 * count * (count -1) * (count -2) - total;
     cout << "Total: " << total << endl;
 
     cout << endl;
+
 
 }
 
