@@ -140,23 +140,22 @@ int main ()
 	    // for each neighbor v
         for (int x = 0; x < nodes.size(); x++)
             {           
-                int v = nodes[x];                    
+                int v = nodes[x];                 
                 if(u < v)
                 {
                     cout << v << " "; 
                     vector <int> vNodes = list[v];
-                    //triadCounts[1] += count- 
 
                     //this is the one that's off by the most.  I must be missing something.
                     
 
-                    /*
+                    
                     //if(std::count(S.begin(), S.end(), key ) == 1)
                       //  triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
                    
-                    //vector<int> S (nodes);
-                    /*
-                    vector<int> nodes2 = list[nodes[i]];
+                    vector<int> S (nodes);
+                    
+                    vector<int> nodes2 = list[nodes[x]];
                     sort(nodes2.begin(), nodes2.end());
                     vector<int> :: iterator it2;
 
@@ -165,31 +164,27 @@ int main ()
                     S.insert(S.end(), nodes2.begin(), nodes2.end() );
                     sort(S.begin(), S.end());
                     unique(S.begin(), S.end());
-
-                    //vector<int> :: iterator it3 = S.begin();
-                    //it2 = set_union(nodes.begin(), nodes.end(), nodes2.begin(), nodes2.end(), S.begin() );
-                    //S.resize( it2-S.begin() );
                     
-                   
-
+                    triadCounts[1] += count- S.size();
+                    /*
                     for(it2 = S.begin(); it2!= S.end(); it2++)
                     {
                             //cout << ' ' << *it2;
-                    }
-                    cout << endl;  
-                    */
+                    }*/
+                    //cout << endl;  
+                    
                     // the algorithm says its the number of edges in S, but not sure how to easily compute that
                     //triadCounts[1] += count- S.size() -2;
             		
         			
         			for (int y=0; y < vNodes.size(); y++) 
                     {
-                        int w = vNodes[y];
-                        triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
+                        int w = vNodes[y];     
+                        triadCounts[2] +=1; // if its in nodes, it's already connected once.  every neighbor of this neighbor then forms a 2 connection triad.                   
         				if (u < w) 
                         {           
                             ///this one is only off by a little bit                 
-                            triadCounts[2] +=1; // if its in nodes, it's already connected once.  every neighbor of this neighbor then forms a 2 connection triad.
+                            
                             //triadCounts[1] +=2;
                             if ( v < w)
                             {
@@ -198,6 +193,10 @@ int main ()
                                     triadCounts[3] +=1; // this comes out to 2X the correct answer
                                     //triadCounts[1] +=3;
                                 }   
+                            }
+                            else
+                            {
+                                //triadCounts[1] +=1;
                             }
         					//ret = tricode(key, nodes[i], S[j]);
         					//triadCounts[ret]++;
