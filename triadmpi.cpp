@@ -82,13 +82,13 @@ int tricode(int u, int v, int w) {
 
 	// Since we arent directed, we count edges as both ways?
 	
-	i += (link(u, v)) ? 3 : 0; 
-	i += (link(w, v)) ? 12 : 0;
-	i += (link(u, w)) ? 48 : 0;
-
+	i += (link(u, v)) ? 1 : 0; 
+	i += (link(w, v)) ? 1 : 0;
+	i += (link(u, w)) ? 1 : 0;
+    /*
 	if (i == 3 || i == 12 || i == 48) return 0; 
 	if (i == 15 || i == 51 || i == 60) return 2; // changed this to two, was 3 before
-	if (i == 63) return 3;
+	if (i == 63) return 3;*/
 
 	// 0-63
 	return i;
@@ -103,7 +103,7 @@ int main ()
     map<int, vector <int> > links;
     int triadCounts[4] = {0, 0, 0, 0}, total = 0;
     int ret=0;
-    int count = 0; // counts number of nodes
+    double count = 0; // counts number of nodes
 
     inputFile.open("testinput.egonets");
     if(inputFile.is_open())
@@ -140,10 +140,20 @@ int main ()
 	    // for each neighbor v
         for (int i = 0; i < nodes.size(); i++)
             {
-                cout << nodes[i] << " ";
+                cout << nodes[i] << " ";                
                 if(key < nodes[i])
                 {
-                    vector<int> S (nodes);
+                    vector <int> S = list[nodes[i]];
+
+                    //this is the one that's off by the most.  I must be missing something.
+                    triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
+
+                    /*
+                    //if(std::count(S.begin(), S.end(), key ) == 1)
+                      //  triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
+                   
+                    //vector<int> S (nodes);
+                    /*
                     vector<int> nodes2 = list[nodes[i]];
                     sort(nodes2.begin(), nodes2.end());
                     vector<int> :: iterator it2;
@@ -157,7 +167,7 @@ int main ()
                     //vector<int> :: iterator it3 = S.begin();
                     //it2 = set_union(nodes.begin(), nodes.end(), nodes2.begin(), nodes2.end(), S.begin() );
                     //S.resize( it2-S.begin() );
-
+                    
                    
 
                     for(it2 = S.begin(); it2!= S.end(); it2++)
@@ -165,40 +175,49 @@ int main ()
                             //cout << ' ' << *it2;
                     }
                     cout << endl;  
-
+                    */
                     // the algorithm says its the number of edges in S, but not sure how to easily compute that
-                    triadCounts[1] += count- S.size() -2;
-            		// XXX how to determine tricode type for count?
-            			
-        	        //add the neighbors of key and neighbors of node[i] into new vector
+                    //triadCounts[1] += count- S.size() -2;
+            		
         			
         			for (int j=0; j < S.size(); j++) 
                     {
         				if (key < S[j]) 
-                        {
-        					ret = tricode(key, nodes[i], S[j]);
-        					triadCounts[ret]++;
+                        {           
+                            ///this one is only off by a little bit                 
+                            triadCounts[2] +=1; // if its in nodes, it's already connected once.  every neighbor of this neighbor then forms a 2 connection triad.
+
+                            if(std::count(nodes.begin(), nodes.end(), S[j] ) == 1) // if its in nodes, it's connected to original node, and if it's in S, it's a neighbor of the neighbor node, make it a 3 way triad.
+                            {
+                                triadCounts[3] +=1; // this comes out to 2X the correct answer
+                            }   
+        					//ret = tricode(key, nodes[i], S[j]);
+        					//triadCounts[ret]++;
         				}
         			}
             	
-                    //do the other stuff in the pseudocode below
+                    
 
                 }
         }
 
     }
 
+
     for (int i = 0; i < 4; i++) 
     {
  		total += triadCounts[i];		
     }
 
-    triadCounts[0] = (double) (1/6 * count * (count -1) * (count -2)) - total;
+    double numZero = (double) ( count * (count -1) * (count -2))/6.0 - total;
+    triadCounts[0] = (int) numZero;
     cout << endl << "Triad Counts: " << endl;
     for (int i = 0; i < 4; i++) 
     {
         cout << i << ": " << triadCounts[i] << endl;
     }
+
+    cout << "Num Zero: " << numZero << " Count: " << count << endl;
 
     cout << "Total: " << total << endl;
 
