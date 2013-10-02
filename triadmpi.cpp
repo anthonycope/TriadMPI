@@ -132,21 +132,23 @@ int main ()
     for (it=list.begin(); it!=list.end(); ++it)
     {
 	   // row u
-        int key = it -> first; 
-        cout << "Node: " << key << endl;
+        int u = it -> first; 
+        cout << endl << "Node: " << u << endl;
         cout << "Neighbors: ";
         vector<int> nodes = it -> second;
         sort(nodes.begin(), nodes.end());
 	    // for each neighbor v
-        for (int i = 0; i < nodes.size(); i++)
-            {
-                cout << nodes[i] << " ";                
-                if(key < nodes[i])
+        for (int x = 0; x < nodes.size(); x++)
+            {           
+                int v = nodes[x];                    
+                if(u < v)
                 {
-                    vector <int> S = list[nodes[i]];
+                    cout << v << " "; 
+                    vector <int> vNodes = list[v];
+                    //triadCounts[1] += count- 
 
                     //this is the one that's off by the most.  I must be missing something.
-                    triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
+                    
 
                     /*
                     //if(std::count(S.begin(), S.end(), key ) == 1)
@@ -180,29 +182,34 @@ int main ()
                     //triadCounts[1] += count- S.size() -2;
             		
         			
-        			for (int j=0; j < S.size(); j++) 
+        			for (int y=0; y < vNodes.size(); y++) 
                     {
-        				if (key < S[j]) 
+                        int w = vNodes[y];
+                        triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
+        				if (u < w) 
                         {           
                             ///this one is only off by a little bit                 
                             triadCounts[2] +=1; // if its in nodes, it's already connected once.  every neighbor of this neighbor then forms a 2 connection triad.
-
-                            if(std::count(nodes.begin(), nodes.end(), S[j] ) == 1) // if its in nodes, it's connected to original node, and if it's in S, it's a neighbor of the neighbor node, make it a 3 way triad.
+                            //triadCounts[1] +=2;
+                            if ( v < w)
                             {
-                                triadCounts[3] +=1; // this comes out to 2X the correct answer
-                            }   
+                                if(std::count(nodes.begin(), nodes.end(), vNodes[y] ) == 1) // if its in nodes, it's connected to original node, and if it's in S, it's a neighbor of the neighbor node, make it a 3 way triad.
+                                {
+                                    triadCounts[3] +=1; // this comes out to 2X the correct answer
+                                    //triadCounts[1] +=3;
+                                }   
+                            }
         					//ret = tricode(key, nodes[i], S[j]);
         					//triadCounts[ret]++;
         				}
-        			}
-            	
+        			}                                	
                     
 
-                }
+                }   
+                //cout << endl;
         }
-
     }
-
+        
 
     for (int i = 0; i < 4; i++) 
     {
@@ -211,13 +218,14 @@ int main ()
 
     double numZero = (double) ( count * (count -1) * (count -2))/6.0 - total;
     triadCounts[0] = (int) numZero;
+    total += triadCounts[0];
     cout << endl << "Triad Counts: " << endl;
     for (int i = 0; i < 4; i++) 
     {
         cout << i << ": " << triadCounts[i] << endl;
     }
 
-    cout << "Num Zero: " << numZero << " Count: " << count << endl;
+    cout << "Count: " << count << endl;
 
     cout << "Total: " << total << endl;
 
@@ -225,6 +233,7 @@ int main ()
 
 
 }
+
 
 // int n = num nodes;
 //intialize an empty array to hold count for each type of triadmpi
