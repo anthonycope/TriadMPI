@@ -78,61 +78,40 @@ int tricode(int u, int v, int w) {
 //	vector<int> ret(2);
 	int i=0;
 
+/*
 	i += (link(u, v)) ? 3 : 0; 
 	i += (link(w, v)) ? 12 : 0;
 	i += (link(u, w)) ? 48 : 0;
+*/
 
-	if (i == 3 || i == 12 || i == 48) return 1; 
-	if (i == 15 || i == 51 || i == 60) return 2;
+	i += (link(v, u)) ? 1 : 0;
+	i += (link(u, v)) ? 2 : 0;
+
+	i += (link(v, w)) ? 4 : 0;
+	i += (link(w, v)) ? 8 : 0;
+
+	i += (link(u, w)) ? 16 : 0;
+	i += (link(w, u)) ? 32 : 0;
+
+	// All 1-edge cases
+	if (i == 3 || i == 1 || i == 2 || 
+	    i == 4 || i == 8 || i == 12 || i == 48
+	   || i == 16 || i == 32) return 2;
+
+	// All 2-edge cases
+ 	if (i == 5 || i == 9 || i == 17 ||
+	    i == 33 || i == 6 || i == 10 || i == 18 ||
+	    i == 34 || i == 20 || i == 36 ||
+	    i == 24 || i == 40 || i == 51 || 
+	    i == 15) return 2;
+
 	if (i == 63) return 3;
+
+printf("%d ", i);
 
 	// 0-63
 	return i;
 
-/*	
-	if (link(u,v)) {
-		ret[1]++;
-		ret[0] += 1;
-	}
-
-	if (link(v,u)) {
-		ret[1]++;
-		ret[0] += 2;
-	}
-
-	if (link(w,v)) {
-		ret[1]++;
-		ret[0] += 6;
-	}
-
-	if (link(v,w)) {
-		ret[1]++;
-		ret[0] += 12;
-	}
-
-	if (link(u,w)) {
-		ret[1]++;
-		ret[0] += 32;
-	}
-
-	if (link(w,u)) {
-		ret[1]++;
-		ret[0] += 48;
-	}
-*/
-
-/*
-	ret[0] += (link(u, v)) ? 1 : 0;
-	ret[0] += (link(v, u)) ? 2 : 0;
- 
-	ret[0] += (link(w, v)) ? 6 : 0;
-	ret[0] += (link(v, w)) ? 12 : 0;
-
-	ret[0] += (link(u, w)) ? 32 : 0;
-	ret[0] += (link(w, u)) ? 48 : 0;
-*/
-
-//	return ret;
 }
 
 
@@ -191,27 +170,33 @@ int main ()
 
 		if (key < nodes[i]) {
 			
-                    vector<int> S (nodes);
+                    vector<int> S (nodes), S2 (nodes);
                     vector<int> nodes2 = list[nodes[i]];
                     vector<int> :: iterator it2;
 
-                    S.insert(S.end(), nodes2.begin(), nodes2.end() );
-                    sort(S.begin(), S.end());
-                    unique(S.begin(), S.end());
-		    //triadCounts[1] += (nodes.size()+nodes2.size()) - S.size();
+                    S2.insert(S2.end(), nodes2.begin(), nodes2.end() );
+                    sort(S2.begin(), S2.end());
+                    unique(S2.begin(), S2.end());
+		   
+		    if (link(key, nodes[i]) && link(nodes[i], key))
+			triadCounts[1] += list.size() - S2.size() - 2;
+		    else triadCounts[2] += list.size() - S.size() - 2;
+
 		    local1 = 0;
 	
 		    for (int j=0; j < S.size(); j++) {
-				if (key < S[j]) continue;
+				if (nodes[i] < S[j] || 
+				    (key < S[j] && S[j] < nodes[i] && !link(S[j], key)) ) {
 
-				ret = tricode(key, nodes[i], S[j]);
+					ret = tricode(key, nodes[i], S[j]);
 
-				triadCounts[ret]++;
-				local1++;
+					triadCounts[ret]++;
+					local1++;
+				}
 	   	    }
 
-	            if (S.size() - local1 > 0) triadCounts[1] += S.size() - local1;
-		    else if (S.size() <= 0) triadCounts[1]++;
+                   if (S.size() - local1 > 0) triadCounts[2] += S.size() - local1;
+                   else if (S.size() <= 0) triadCounts[1]++;
 
 		}
         }
