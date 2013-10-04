@@ -21,7 +21,7 @@
 using namespace std;
 
 //key is the node, value is the vector of neighbors
-map<int, vector <int> > list;
+map<int, vector <int> > links;
 
 
 //function from: http://www.openframeworks.cc/files/005-rc/005-rc2-xcode-for-zach/addons/ofXmlSettings/src/ofXmlSettings.cpp
@@ -65,76 +65,104 @@ vector <int>  getInput(string line)
     return intNodes;
 }
 
-int link(int v1, int v2) {
-	vector<int> v1_list = list[v1];
-	vector<int> v2_list = list[v2];
 
-	// O(n) :-( can we do better? XXX
-	for (int i=0; i < v1_list.size(); i++) {
-		if (v1_list[i] == v2) return 1;
-	}
-
-	return 0;
-}
-
-int tricode(int u, int v, int w) {
-	int i = 0;
-
-	// Since we arent directed, we count edges as both ways?
-	
-	i += (link(u, v)) ? 1 : 0; 
-	i += (link(w, v)) ? 1 : 0;
-	i += (link(u, w)) ? 1 : 0;
-    /*
-	if (i == 3 || i == 12 || i == 48) return 0; 
-	if (i == 15 || i == 51 || i == 60) return 2; // changed this to two, was 3 before
-	if (i == 63) return 3;*/
-
-	// 0-63
-	return i;
-}
-
-
-int main ()
+int main (int argc, char** argv)
 {
+    MPI_Init(&argc, &argv);
     fstream inputFile;
     string line;
 
-    map<int, vector <int> > links;
+    int numProcessors;
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, & rank);
+
+
+
+    map<int, vector<int> > links;
     int triadCounts[4] = {0, 0, 0, 0}, total = 0;
     int ret=0;
     double count = 0; // counts number of nodes
 
-    inputFile.open("testinput.egonets");
-    if(inputFile.is_open())
+    if(rank == 0)
     {
-        while(!inputFile.eof())
+        inputFile.open("testinput.egonets");
+        if(inputFile.is_open())
         {
-            // get the line from the file
-            getline(inputFile, line);
-            // get the nodes on that line
-            vector <int> nodes = getInput(line);
-            // get the first node
-            int key = nodes[0];
-            //remove the first node from list of neighbors
-            nodes.erase(nodes.begin());
-            //assign neighbors to map with node as key
-            list[key] = nodes;
-            count++;
+            while(!inputFile.eof())
+            {
+                // get the line from the file
+                getline(inputFile, line);
+                // get the nodes on that line
+                vector <int> nodes = getInput(line);
+                // get the first node
+                int key = nodes[0];
+                //remove the first node from links of neighbors
+                nodes.erase(nodes.begin());
+                //assign neighbors to map with node as key
+                links[key] = nodes;
+            }
+
+            inputFile.close();
         }
-
-        inputFile.close();
-
     }
+
+    count = links.size();
+    for(int i = 0; i < links.size(); i++)
+    {
+
+        int size;
+        int key;       
+        vector <int> row; 
+
+        if(rank == 0)
+        {   
+
+            row = links[i];
+            size = row.size();
+            //int[size] row;
+            //for( int x = 0; x < size; x++)
+            //{
+             //   row[x] = vectorRow[x];
+            //}           
+           //row = &vectorRow[0];           
+           key = i;
+        }
+       //int 
+       MPI_Bcast(&size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&row, size, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&key, 1, MPI_INT, 0, MPI_COMM_WORLD);
+       //links[i].assign(row, row.size());
+       if(rank != 0)
+       {
+           cout << "Key: " << key << " | ";
+           for( int j = 0; j < size; j++)
+           {
+                //vectorRow = links[i];
+                cout << row[j] << " ";;
+                }
+                cout << endl;
+            }
+        }
+    MPI_Finalize();
+
+    return 0;
+
+    //cout << "Rank : " << rank << " Size: " << links.size() << endl;
+
+
+
+    /*
 
     map<int, vector <int> >::iterator it;
 
-    for (it=list.begin(); it!=list.end(); ++it)
+    for (it=links.begin(); it!=links.end(); ++it)
     {
 	   // row u
         int u = it -> first; 
-        cout << endl << "Node: " << u << endl;
-        cout << "Neighbors: ";
+        //cout << endl << "Node: " << u << endl;
+        //cout << "Neighbors: ";
         vector<int> nodes = it -> second;
         sort(nodes.begin(), nodes.end());
 	    // for each neighbor v
@@ -143,19 +171,15 @@ int main ()
                 int v = nodes[x];                 
                 if(u < v)
                 {
-                    cout << v << " "; 
-                    vector <int> vNodes = list[v];
-
-                    //this is the one that's off by the most.  I must be missing something.
-                    
-
+                    //cout << v << " "; 
+                    vector <int> vNodes = links[v];
                     
                     //if(std::count(S.begin(), S.end(), key ) == 1)
                       //  triadCounts[1] += 1; // every neighbor is 1 connection because it's undirected
                    
                     vector<int> S (nodes);
                     
-                    vector<int> nodes2 = list[nodes[x]];
+                    vector<int> nodes2 = links[nodes[x]];
                     sort(nodes2.begin(), nodes2.end());
                     vector<int> :: iterator it2;
 
@@ -165,17 +189,7 @@ int main ()
                     sort(S.begin(), S.end());
                     unique(S.begin(), S.end());
                     
-                    triadCounts[1] += count- S.size();
-                    /*
-                    for(it2 = S.begin(); it2!= S.end(); it2++)
-                    {
-                            //cout << ' ' << *it2;
-                    }*/
-                    //cout << endl;  
-                    
-                    // the algorithm says its the number of edges in S, but not sure how to easily compute that
-                    //triadCounts[1] += count- S.size() -2;
-            		
+                    triadCounts[1] += count- S.size();            		
         			
         			for (int y=0; y < vNodes.size(); y++) 
                     {
@@ -185,21 +199,13 @@ int main ()
                         {           
                             ///this one is only off by a little bit                 
                             
-                            //triadCounts[1] +=2;
                             if ( v < w)
                             {
                                 if(std::count(nodes.begin(), nodes.end(), vNodes[y] ) == 1) // if its in nodes, it's connected to original node, and if it's in S, it's a neighbor of the neighbor node, make it a 3 way triad.
                                 {
                                     triadCounts[3] +=1; // this comes out to 2X the correct answer
-                                    //triadCounts[1] +=3;
                                 }   
                             }
-                            else
-                            {
-                                //triadCounts[1] +=1;
-                            }
-        					//ret = tricode(key, nodes[i], S[j]);
-        					//triadCounts[ret]++;
         				}
         			}                                	
                     
@@ -208,6 +214,12 @@ int main ()
                 //cout << endl;
         }
     }
+
+    if(rank != 0)
+    {
+        MPI_Send(&triadCounts,4,MPI_DOUBLE, 
+    }
+
         
 
     for (int i = 0; i < 4; i++) 
@@ -229,6 +241,7 @@ int main ()
     cout << "Total: " << total << endl;
 
     cout << endl;
+    */
 
 
 }
@@ -243,7 +256,7 @@ int main ()
                 //S = all neighbors of first element, all neighbors of the selected neighbor (have to find them)
                 //add counts[1] += counts[1] + n - |S| -2
                 //for each element w in S
-                    // if ( u < w || (v <w && w < u &&  v is not in the neighbor list of w)) // might have to modify this, because we are doing undirected graph, so we don't want to check different configurations, only one. maybe just u <w
+                    // if ( u < w || (v <w && w < u &&  v is not in the neighbor links of w)) // might have to modify this, because we are doing undirected graph, so we don't want to check different configurations, only one. maybe just u <w
                             //Type = Tricode (v,u,w);
                             // counts[Type] ++
 
