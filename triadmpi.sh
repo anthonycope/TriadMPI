@@ -17,7 +17,7 @@
 
 # Set the number of cpus to 4 and a job timeout of 8 hours.
 
-#$ -l pcpus=8,h_rt=2:00:00
+#$ -l pcpus=8,h_rt=4:00:00
 
 # Load appropriate modules
 

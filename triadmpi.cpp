@@ -89,9 +89,12 @@ int main (int argc, char** argv)
     {
         fstream inputFile;
         string line;
+        int x = 0;
+
 
         //inputFile.open("testinput.egonets");
-        inputFile.open("steam-community.egonets");
+        //inputFile.open("steam-community.egonets");
+        inputFile.open("steam-community2.egonets");
         if(inputFile.is_open())
         {
             while(!inputFile.eof())
@@ -106,6 +109,8 @@ int main (int argc, char** argv)
                 nodes.erase(nodes.begin());
                 //assign neighbors to map with node as key
                 links[key] = nodes;
+                //cout << x++ << endl;
+
             }
 
             inputFile.close();
@@ -116,6 +121,7 @@ int main (int argc, char** argv)
         }
         mapSize = links.size();
     }
+
 /*
     int test[4] = {0,1,2,3};
 
@@ -189,6 +195,7 @@ int main (int argc, char** argv)
 
     map<int, vector <int> >::iterator it;
 
+    // had to modify loop so that each CPU would work on its own rows, and wouldn't overlap the others
     for(int i = rank; i < mapSize; i+=numProcessors)
     {
         int u = i;
@@ -270,12 +277,13 @@ int main (int argc, char** argv)
      		total += triadCounts[i];		
         }
 
-        long double numZero =  mapSize * (mapSize -1) * (mapSize -2)/6.0;
+        //long double numZero =  (long double) 12477843 * (long double)(12477843 -1) * (long double)(12477843 -2)/6.0;
+        long double numZero =  (long double) mapSize * (long double)(mapSize -1) * (long double) (mapSize -2)/6.0;
         cout.setf(ios::fixed);            
-        cout <<  "NumZero: " << std::setprecision(0) << numZero << endl;
+        cout <<  "NumZero: " << setprecision(0) << numZero << endl;
 
         numZero-= total;
-        triadCounts[0] = (int) numZero;
+        triadCounts[0] = (long double) numZero;
         total += triadCounts[0];
 
         cout << endl << "Triad Counts: " << endl;
@@ -283,7 +291,7 @@ int main (int argc, char** argv)
         for (int i = 0; i < 4; i++) 
         {
             cout.setf(ios::fixed);
-            cout << std::setprecision(0) << i << ": " << triadCounts[i] << endl;
+            cout << setprecision(0) << i << ": " << triadCounts[i] << endl;
         }
 
 
