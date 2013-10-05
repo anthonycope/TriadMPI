@@ -1,0 +1,11 @@
+can send each vector one at a time
+
+can send each list (vector) one at a time, then rebuild map 
+
+for i = rank; i < size; i+=numProcessors
+//divides problem into size of numprocessors, starts at unique spot according to rank, then increments by 
+number of processors
+
+each process return triad counts
+
+sum them

@@ -16,6 +16,7 @@
 #include <map>
 #include <algorithm>
 #include <iterator>
+#include <iomanip>
 #include "mpi.h"
 
 using namespace std;
@@ -69,8 +70,8 @@ vector <int>  getInput(string line)
 int main (int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
-    fstream inputFile;
-    string line;
+
+    int mapSize;
 
     int numProcessors;
     MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
@@ -81,13 +82,16 @@ int main (int argc, char** argv)
 
 
     map<int, vector<int> > links;
-    int triadCounts[4] = {0, 0, 0, 0}, total = 0;
+    long double triadCounts[4] = {0, 0, 0, 0}, total = 0;
     int ret=0;
-    double count = 0; // counts number of nodes
 
     if(rank == 0)
     {
-        inputFile.open("testinput.egonets");
+        fstream inputFile;
+        string line;
+
+        //inputFile.open("testinput.egonets");
+        inputFile.open("steam-community.egonets");
         if(inputFile.is_open())
         {
             while(!inputFile.eof())
@@ -106,13 +110,29 @@ int main (int argc, char** argv)
 
             inputFile.close();
         }
+        else
+        {
+            cout << "ERROR" << endl;
+        }
+        mapSize = links.size();
     }
+/*
+    int test[4] = {0,1,2,3};
 
-    count = links.size();
-    for(int i = 0; i < links.size(); i++)
+    MPI_Bcast(test, 4, MPI_INT, 0, MPI_COMM_WORLD);
+    cout << "Rank: " << rank << " ";
+    for(int x = 0; x < 4; x++)
+    {
+       cout << " " << test[x] << " ";
+    }*/
+    cout << endl;
+    MPI_Bcast(&mapSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    //count = links.size();
+    for(int i = 0; i < mapSize; i++)
     {
 
-        int size;
+        int rowSize;
         int key;       
         vector <int> row; 
 
@@ -120,50 +140,60 @@ int main (int argc, char** argv)
         {   
 
             row = links[i];
-            size = row.size();
-            //int[size] row;
-            //for( int x = 0; x < size; x++)
-            //{
-             //   row[x] = vectorRow[x];
-            //}           
+            rowSize = row.size();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Bcast(&rowSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        int rowArray[rowSize];
+        if(rank == 0)
+        {
+            vector<int> vectorRow = links[i];
+            for( int x = 0; x < rowSize; x++)
+            {
+               rowArray[x] = vectorRow[x];
+            }           
            //row = &vectorRow[0];           
            key = i;
+        
         }
-       //int 
-       MPI_Bcast(&size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       MPI_Bcast(&row, size, MPI_INT, 0, MPI_COMM_WORLD);
-       MPI_Bcast(&key, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       //links[i].assign(row, row.size());
-       if(rank != 0)
-       {
-           cout << "Key: " << key << " | ";
-           for( int j = 0; j < size; j++)
+
+        MPI_Bcast(&rowArray, rowSize, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&key, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
+        //links[i].assign(row, row.size());
+        if(rank != 0)
+        {
+            vector<int> vectorRow;
+             for( int x = 0; x < rowSize; x++)
+            {
+               vectorRow.push_back(rowArray[x]);
+            }          
+           //cout << "Key: " << key << " | ";
+           links[key] = vectorRow;
+
+           vector <int> testRow = links[key];/*
+           for( int j = 0; j < rowSize; j++)
            {
                 //vectorRow = links[i];
-                cout << row[j] << " ";;
-                }
-                cout << endl;
+                cout << testRow[j] << " ";
             }
+            cout << endl;*/
         }
-    MPI_Finalize();
-
-    return 0;
+    }       
 
     //cout << "Rank : " << rank << " Size: " << links.size() << endl;
 
 
 
-    /*
+    
 
     map<int, vector <int> >::iterator it;
 
-    for (it=links.begin(); it!=links.end(); ++it)
+    for(int i = rank; i < mapSize; i+=numProcessors)
     {
-	   // row u
-        int u = it -> first; 
-        //cout << endl << "Node: " << u << endl;
-        //cout << "Neighbors: ";
-        vector<int> nodes = it -> second;
+        int u = i;
+        vector<int> nodes = links[i];    
+        //cout << u << endl;
         sort(nodes.begin(), nodes.end());
 	    // for each neighbor v
         for (int x = 0; x < nodes.size(); x++)
@@ -181,15 +211,13 @@ int main (int argc, char** argv)
                     
                     vector<int> nodes2 = links[nodes[x]];
                     sort(nodes2.begin(), nodes2.end());
-                    vector<int> :: iterator it2;
-
 
                     // S is the union of the node and its neighbors
                     S.insert(S.end(), nodes2.begin(), nodes2.end() );
                     sort(S.begin(), S.end());
                     unique(S.begin(), S.end());
                     
-                    triadCounts[1] += count- S.size();            		
+                    triadCounts[1] += mapSize- S.size() -2;            		
         			
         			for (int y=0; y < vNodes.size(); y++) 
                     {
@@ -217,31 +245,58 @@ int main (int argc, char** argv)
 
     if(rank != 0)
     {
-        MPI_Send(&triadCounts,4,MPI_DOUBLE, 
+        MPI_Send(&triadCounts,4,MPI_LONG_DOUBLE, 0, 1, MPI_COMM_WORLD);
+        //cout << "SENT" << endl;
     }
-
+    if(rank == 0)
+    {
+        int count = 0;
+        long double counts[4] = {0,0,0,0};
         
+        while(count < numProcessors -1) // so all processes return
+        {
+            MPI_Recv(&counts, 4, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            for(int x = 0; x < 4; x++)
+            {
+                triadCounts[x] += counts[x];
+            }
+            count++;
+        }
 
-    for (int i = 0; i < 4; i++) 
-    {
- 		total += triadCounts[i];		
+        //cout << "HERE" << endl;             
+
+        for (int i = 1; i < 4; i++) 
+        {
+     		total += triadCounts[i];		
+        }
+
+        long double numZero =  mapSize * (mapSize -1) * (mapSize -2)/6.0;
+        cout.setf(ios::fixed);            
+        cout <<  "NumZero: " << std::setprecision(0) << numZero << endl;
+
+        numZero-= total;
+        triadCounts[0] = (int) numZero;
+        total += triadCounts[0];
+
+        cout << endl << "Triad Counts: " << endl;
+
+        for (int i = 0; i < 4; i++) 
+        {
+            cout.setf(ios::fixed);
+            cout << std::setprecision(0) << i << ": " << triadCounts[i] << endl;
+        }
+
+
+        cout << "Count: " << mapSize << endl;
+        cout << "Total: " << total << endl;
+
+        cout << endl;
     }
+    
 
-    double numZero = (double) ( count * (count -1) * (count -2))/6.0 - total;
-    triadCounts[0] = (int) numZero;
-    total += triadCounts[0];
-    cout << endl << "Triad Counts: " << endl;
-    for (int i = 0; i < 4; i++) 
-    {
-        cout << i << ": " << triadCounts[i] << endl;
-    }
+    MPI_Finalize();
 
-    cout << "Count: " << count << endl;
-
-    cout << "Total: " << total << endl;
-
-    cout << endl;
-    */
+    return 0;
 
 
 }

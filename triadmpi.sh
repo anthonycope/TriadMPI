@@ -17,16 +17,16 @@
 
 # Set the number of cpus to 4 and a job timeout of 8 hours.
 
-#$ -l pcpus=2,h_rt=0:10:00
+#$ -l pcpus=8,h_rt=2:00:00
 
 # Load appropriate modules
 
-module add compilers/gcc/4.4.7
+module add compilers/gcc/4.4.7;
 
-module add mpi/openmpi/1.6.1
+module add mpi/openmpi/1.6.1;
 
 # Execute our program
 
-mpirun triadmpi
+time mpirun triadmpi;
 
 # END OF FILE
